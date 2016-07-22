@@ -1,0 +1,90 @@
+.right {
+	float: right;
+}
+
+.dummy {
+	margin-top: 90%;
+}
+
+.dummy + a {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 10px;
+    right: 10px;
+}
+
+.thumbnail {
+	padding-left: 12px;
+}
+
+a.thumbnail:hover {
+	text-decoration: none;
+}
+
+a.thumbnail:active {
+	text-decoration: none;
+}
+
+a.thumbnail:-webkit-any-link {
+	text-decoration: none;
+}
+
+.thumbnail > h3 {
+	margin-top: 0px;
+}
+
+.thumbnail img {
+    margin-right: 7px;
+    margin-left: 5px;
+}
+
+#student-tbl th:hover {
+	background-color: #33ccff;
+}
+
+#student-tiles {
+	display: none;
+}
+
+.modal-sm {
+	margin-top: 300px;
+	margin-left: auto;
+	margin-right: auto;
+	text-align: center;
+	display: block;
+	width: 55px;
+	height: 55px;
+}
+
+.sort-glyph {
+	text-align: right;
+	visibility: hidden;
+}
+
+.glyphicon-spin {
+    -webkit-animation: spin 1000ms infinite linear;
+    animation: spin 1000ms infinite linear;
+}
+
+@-webkit-keyframes spin {
+    0% {
+        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg);
+    }
+    100% {
+        -webkit-transform: rotate(359deg);
+        transform: rotate(359deg);
+    }
+}
+
+@keyframes spin {
+    0% {
+        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg);
+    }
+    100% {
+        -webkit-transform: rotate(359deg);
+        transform: rotate(359deg);
+    }
+}
