@@ -299,7 +299,7 @@ function render(students) {
 $(document).ready(() => {
     if (window.TESTING) return;
     
-    $.getJSON("/api/students", (result) => {
+    $.getJSON("/api/v1/students", (result) => {
         render(result);
     });
     
