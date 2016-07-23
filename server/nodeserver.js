@@ -3,6 +3,20 @@ Author: Daniel Clark
 
 Design Docs At:
 https://drive.google.com/folderview?id=0B-IJ4PvYye6hel9pZF9DNDg4S00&usp=sharing
+
+How to run this project on your own c9 box:
+
+Make sure that your node install is updated to v6.3.1 or greater
+Guide here: https://community.c9.io/t/how-to-update-node-js/1273/2
+
+Go to the folder where you want it.
+Type the following commmands.
+
+git clone https://github.com/silvri/cs3660-students.git
+cd cs3660-students
+npm install
+npm start
+
 */
 const express = require('express');
 const morgan = require('morgan');
@@ -13,13 +27,14 @@ const fs = require('fs');
 const path = require('path');
 
 const WEBPATH = path.join(__dirname, '../web');
+const SRVPATH = __dirname;
 
 // INIT
 const app = express();
 const server = http.createServer(app);
 
 console.log("Fetching student data");
-let students = JSON.parse(fs.readFileSync('students.json'));
+let students = JSON.parse(fs.readFileSync(path.join(SRVPATH, 'students.json')));
 
 // MIDDLEWARE
 app.use(morgan('dev'));
