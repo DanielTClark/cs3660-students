@@ -1,29 +1,13 @@
 'use strict';
 
 /* 
-* Author: Daniel Clark
-* 
-* NOTE TO READERS
-* If you are files in the dist folder, this is transpiled code.
-* The original source is in the src folder.
-*
-* Milestone 1: Have a static mockup website. 
-*              Completed
-* 
-* Milestone 2: Static tiles view added. Icons have tooltips. Table gets data dynamically. Estimate: 2-4 hours
-*              Completed except for tooltips.
-* 
-* Milestone 3: Tiles get data dynamically. Sorting added to table view. Estimate 2-4 hours
-*              Completed. Tooltips added. Table sorts. Modal implemented.
-*                         Displayed sort glyphs for bonus, because it made sense to do it now.
-*
-* Milestone 4: Cookies added. Tests and Layout cleaned up. Estimate 2-6 hours
-*              Completed. All pure functions except for HTML generators have tests.
-*                         Fixed up display of sort glyphs according to new info in class.
-*                         Layout for tile view now includes placeholder image.
+Author: Daniel Clark
+
 */
 
 /* global $ Cookies */
+
+const PAGE_SIZE = 10;
 
 let tblSpec = {
     // order of columns in table
@@ -156,12 +140,12 @@ function populateTiles(students) {
     $("#student-tiles").append(tiles.join(''));
 }
 
-// populates head then uses repopTable() to populate body
-function populateTable(students) {
+// populates head then uses repopTable() to generate an empty body
+function initTable() {
     let tbl = $("#student-tbl");
     tbl.append(genHead(tblSpec));
     
-    repopTable(students);
+    repopTable([]);
 }
 
 // handles population and repopulation of body
@@ -271,19 +255,14 @@ class Watcher {
     }
 }
 
-function render(students) {
-    let view = Cookies.get("view");
-    showView(view);
-    if (view === "tiles") $("#opt-tiles").button("toggle")
-    
-    populateTiles(students); // done before sorting
-    
+function finishRender(students) {
     let sortIdx = Cookies.get("sort-idx");
     let sortAsc = Cookies.get("sort-asc") === "true";
     
-    if (sortIdx) sortData(students, sortIdx, sortAsc);
-    
-    populateTable(students);
+    if (sortIdx) {
+        sortData(students, sortIdx, sortAsc);
+        repopTable(students);
+    }
     
     let watcher = new Watcher();
     addSorting(students, watcher);
@@ -299,8 +278,28 @@ function render(students) {
 $(document).ready(() => {
     if (window.TESTING) return;
     
-    $.getJSON("/api/v1/students", (result) => {
-        render(result);
+    let view = Cookies.get('view');
+    showView(view ? view : 'table');
+    if (view === 'tiles') $('#opt-tiles').button('toggle');
+    
+    initTable(); // init table with no entries
+    
+    $.getJSON('/api/v1/students.json', (result) => {
+        result = result.slice(0, PAGE_SIZE);
+        let count = 0;
+        let students = [];
+        
+        for (let name of result) {
+            $.getJSON(`/api/v1/students/${name}`, (s) => {
+                students.push(s);
+                $('#student-tbl tbody').append(genRow(s));
+                $('#student-tiles').append(genTile(s));
+                
+                if (++count === result.length) {
+                    finishRender(students);
+                }
+            });
+        }
     });
     
     $("#opt-table").click(() => {
