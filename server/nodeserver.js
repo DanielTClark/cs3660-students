@@ -34,7 +34,7 @@ const app = express();
 const server = http.createServer(app);
 
 console.log("Fetching student data");
-let students = JSON.parse(fs.readFileSync(path.join(SRVPATH, 'students.json')));
+//let students = JSON.parse(fs.readFileSync(path.join(SRVPATH, 'students', 'students.json')));
 
 // MIDDLEWARE
 app.use(morgan('dev'));
@@ -48,16 +48,37 @@ app.use((req, res, next) => {
 app.use(favicon(path.join(WEBPATH, 'favicon.ico')));
 app.use(express.static(WEBPATH));
 
-// ROUTES
-app.get('/api/v1/students', (req, res) => {
-    res.json(students);
+// REST END POINTS
+// Create
+app.post('/api/v1/students', (req, res) => {
+    
 });
 
-app.get('/api/v1/students/:studentId', (req, res) => {
-    let studentId = parseInt(req.params.studentId);
-    res.json(students.find(s => s.id === studentId));
+// Read
+app.get('/api/v1/students/:studentId.json', (req, res) => {
+    let id = req.params.studentId;
+    res.sendFile(path.join(SRVPATH, 'students', `${id}.json`));
 });
 
+// Update
+app.put('/api/v1/students/:studentId.json', (req, res) => {
+    
+});
+
+// Delete
+app.delete('/api/v1/students/:studentId.json', (req, res) => {
+    
+});
+
+// List
+app.get('/api/v1/students.json', (req, res) => {
+    fs.readdir(path.join(SRVPATH, 'students'), (err, files) => {
+        if (err) res.sendStatus(500);
+        res.send(files);
+    });
+});
+
+// 404
 app.get('*', (req, res) => {
     res.status(404).sendFile(path.join(WEBPATH, '404.html'));
 });

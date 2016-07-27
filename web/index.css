@@ -43,10 +43,6 @@ a.thumbnail:-webkit-any-link {
 	background-color: #33ccff;
 }
 
-#student-tiles {
-	display: none;
-}
-
 .modal-sm {
 	margin-top: 300px;
 	margin-left: auto;
