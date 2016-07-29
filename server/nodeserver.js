@@ -18,13 +18,15 @@ npm install
 npm start
 
 */
-const express = require('express');
-const morgan = require('morgan');
-const favicon = require('serve-favicon');
+const express     = require('express');
+const morgan      = require('morgan');
+const favicon     = require('serve-favicon');
 const compression = require('compression');
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
+const bodyParser  = require('body-parser');
+const urlParser   = bodyParser.urlencoded({ extended:false });
+const http        = require('http');
+const fs          = require('fs');
+const path        = require('path');
 
 const WEBPATH = path.join(__dirname, '../web');
 const SRVPATH = __dirname;
@@ -33,8 +35,17 @@ const SRVPATH = __dirname;
 const app = express();
 const server = http.createServer(app);
 
-console.log("Fetching student data");
-//let students = JSON.parse(fs.readFileSync(path.join(SRVPATH, 'students', 'students.json')));
+console.log("Initializing server");
+
+let maxId;
+{
+    let ids = fs.readdirSync(path.join(SRVPATH, 'students'))
+                    .map(f => parseInt(f.split('.')[0]));
+                    
+    maxId = Math.max.apply(this, ids);
+}
+
+console.log(`Max student ID is: ${maxId}`);
 
 // MIDDLEWARE
 app.use(morgan('dev'));
@@ -50,8 +61,11 @@ app.use(express.static(WEBPATH));
 
 // REST END POINTS
 // Create
-app.post('/api/v1/students', (req, res) => {
-    
+app.post('/api/v1/students', urlParser, (req, res) => {
+    let student = req.body;
+    console.log(student);
+    res.status(201) // Created
+       .json(zeroPad(++maxId));
 });
 
 // Read
@@ -61,20 +75,22 @@ app.get('/api/v1/students/:studentId.json', (req, res) => {
 });
 
 // Update
-app.put('/api/v1/students/:studentId.json', (req, res) => {
-    
+app.put('/api/v1/students/:studentId.json', urlParser, (req, res) => {
+    let id = req.params.studentId;
+    res.sendStatus(204); // No Content
 });
 
 // Delete
 app.delete('/api/v1/students/:studentId.json', (req, res) => {
-    
+    let id = req.params.studentId;
+    res.sendStatus(204); // No Content
 });
 
 // List
 app.get('/api/v1/students.json', (req, res) => {
     fs.readdir(path.join(SRVPATH, 'students'), (err, files) => {
-        if (err) res.sendStatus(500);
-        res.send(files);
+        if (err) return res.sendStatus(404);
+        res.send(files.map(f => f.split('.')[0]));
     });
 });
 
@@ -98,4 +114,10 @@ function shutdown() {
         console.log('\nServer terminated');
         process.exit();
     });
+}
+
+// HELPER FUNCTIONS
+function zeroPad(num) {
+    let str = '0000' + num;
+    return str.substr(-4);
 }

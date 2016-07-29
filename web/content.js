@@ -15,7 +15,8 @@ let tblSpec = {
     // if a pseudo-property is defined, a mapper must be defined to produce it
     // for a pseudo-property, you must also define a custom comparator and write it into genCmp
     "order": ["fullName", "startDate", "year",
-            "street", "city", "state", "zip", "phone"],
+            "street", "city", "state", "zip", "phone",
+            "edit", "delete"],
     
     "labels": {
         "fullName"  : "Name",
@@ -25,13 +26,18 @@ let tblSpec = {
         "city"      : "City",
         "state"     : "State",
         "zip"       : "Zip",
-        "phone"     : "Phone"
+        "phone"     : "Phone",
+        "edit"      : "",
+        "delete"    : ""
     },
     
     // tranforms for if data should be displayed different than model
     "mappers": {
-        "year"     : s => nameForYear(s.year),     // real property
-        "fullName" : s => s.fname + ' ' + s.lname  // pseudo property
+        "startDate" : genDateCol,
+        "year"      : s => nameForYear(s.year),     // real property
+        "fullName"  : s => s.fname + ' ' + s.lname,  // pseudo property
+        "edit"      : genEditCol,
+        "delete"    : genDelCol
     },
     
     // mapping of which comparator type to use for which column.
@@ -41,7 +47,9 @@ let tblSpec = {
         "fullName"  : "fullName",
         "year"      : "number",
         "zip"       : "number",
-        "startDate" : "date"
+        "startDate" : "date",
+        "edit"      : "none",
+        "delete"    : "none"
     },
     
     "sortIcon": {
@@ -56,6 +64,38 @@ let tblSpec = {
     }
 };
 
+class SortWatcher {
+    constructor() {
+        this.sortIdx = null;
+        this.ascending = true;
+    }
+    
+    isSortedBy(idx, asc = true) {
+        if (this.sortIdx === idx) {
+            return asc === this.ascending;
+        }
+        
+        return false;
+    }
+    
+    sortedBy(idx, asc) {
+        this.sortIdx = idx;
+        this.ascending = asc;
+
+        // hide all sort glyphs then show the one on the sorted column
+        $(".sort-glyph").css("visibility", "hidden");
+        showSortGlyph(idx, asc);
+        
+        // set sorting cookies
+        Cookies.set("sort-idx", idx, {expires: 30});
+        Cookies.set("sort-asc", asc, {expires: 30});
+    }
+}
+
+let students = [];
+let watcher = new SortWatcher();
+let editMode = "create";
+
 function nameForYear(year) {
     let names = ['Freshman', 'Sophomore', 'Junior', 'Senior'];
     return names[year - 1];
@@ -64,6 +104,7 @@ function nameForYear(year) {
 // factory method for comparators
 function genCmp(attr, type) {
     /* global cmpNumber cmpFullName cmpDate cmpName */
+    if (type === 'none') return undefined;
     
     return (a, b) => {
         let x = a[attr]; // x and y will be undefined for pseudo-properties
@@ -78,16 +119,17 @@ function genCmp(attr, type) {
     };
 }
 
-function genHead(spec) {
+function genHead() {
     let html = "<thead><tr>";
     
     let cells = 
-        spec.order.map((idx) => {
-            return `
-                <th id='${idx}-head'>
-                ${spec.labels[idx]}&nbsp;
-                <span id='${idx}-glyph' class='sort-glyph glyphicon ${spec.sortIcon[idx]}'></span>
-                </th>`;
+        tblSpec.order.map((idx) => {
+            let html = `<th id='${idx}-head'>${tblSpec.labels[idx]}`;
+            if (tblSpec.comparators[idx] !== "none") {
+                html += `&nbsp;<span id='${idx}-glyph' class='sort-glyph glyphicon ${tblSpec.sortIcon[idx]}'></span>`;
+            }
+            html += '</th>';
+            return html;
         });
     
     html += cells.join("");
@@ -97,7 +139,7 @@ function genHead(spec) {
 }
 
 function genRow(student) {
-    let html = "<tr>";
+    let html = `<tr id='row-${student.id}'>`;
     
     let data = tblSpec.order.map((idx) => {
         // if mapping function is present, use it, else just get the named attribute
@@ -113,6 +155,25 @@ function genRow(student) {
     
     html += "</tr>";
     return html;
+}
+
+function genDateCol(student) {
+    let date = new Date(student.startDate);
+    return date.toDateString();
+}
+
+function genEditCol(student) {
+    return `
+        <button id='edit-${student.id}-btn' type='button' class='btn btn-primary edit-btn'>
+            <span class="glyphicon glyphicon-edit"></span>
+        </button>`;
+}
+
+function genDelCol(student) {
+    return `
+        <button id='del-${student.id}-btn' type='button' class='btn btn-primary del-btn'>
+            <span class="glyphicon glyphicon-trash"></span>
+        </button>`;
 }
 
 function genTile(student) {
@@ -135,7 +196,7 @@ function genTile(student) {
         </div>`;
 }
 
-function populateTiles(students) {
+function populateTiles() {
     let tiles = students.map(genTile);
     $("#student-tiles").append(tiles.join(''));
 }
@@ -143,13 +204,12 @@ function populateTiles(students) {
 // populates head then uses repopTable() to generate an empty body
 function initTable() {
     let tbl = $("#student-tbl");
-    tbl.append(genHead(tblSpec));
-    
-    repopTable([]);
+    tbl.append(genHead());
+    tbl.append("<tbody>");
 }
 
 // handles population and repopulation of body
-function repopTable(students) {
+function repopTable() {
     let tbl = $("#student-tbl");
     
     tbl.find("tbody").remove();
@@ -181,36 +241,79 @@ function showSortGlyph(idx, asc) {
 function sortData(data, idx, asc = true) {
     let type = tblSpec.comparators[idx];
     let cmp = genCmp(idx, type);
+    
+    if (cmp === undefined) return;
+    
     data.sort(cmp);
     if (!asc) data.reverse();
+    
+    watcher.sortedBy(idx, asc);
 }
 
-function addSorting(students, watcher) {
+function addSorting() {
     // add click handler to each table header
     for (let idx of tblSpec.order) {
         $(`#${idx}-head`).click(() => {
-            
-            // show modal
-            $("#spinner-modal").modal({
-                backdrop: "static",
-                keyboard: false
-            });
-            
-            // do sort
-            // ascending only if the column isn't already sorted that way
             let asc = !watcher.isSortedBy(idx);
             sortData(students, idx, asc);
-            
-            // do sorting and hide modal after delay
-            setTimeout(() => {
-                repopTable(students);
-                watcher.sortedBy(idx, asc);
-                
-                $("#spinner-modal").modal("hide");
-            }, 1000);
-            
-        }); // end of click handler
-    } // end for
+            repopTable(students);
+        });
+    }
+}
+
+function addEditing() {
+    // uses 'students' global
+    for (let s of students) {
+        $(`#edit-${s.id}-btn`).click(function(event) {
+            startEdit(s);
+        });
+        
+        $(`#del-${s.id}-btn`).click(function(event) {
+            console.log("DELETE clicked");
+            sendDelete(s);
+        });
+    }
+}
+
+function startEdit(student) {
+    
+}
+
+function sendCreate(student) {
+    $.post('/api/v1/students', student, (data) => {
+        student.id = data;
+        addStudent(student);
+    }, 'json');
+}
+
+function sendUpdate(student) {
+    if (!student.id) throw "Student ID not set";
+    $.ajax({
+        url: `/api/v1/students/${student.id}.json`,
+        type: 'PUT',
+        success: updateRow,
+        data: student,
+        contentType: 'json'
+    });
+    
+    function updateRow() {
+        console.log(`successful UPDATE of ${student.id}`);
+    }
+}
+
+function sendDelete(student) {
+    if (!student.id) throw "Student ID not set";
+    $.ajax({
+        url: `/api/v1/students/${student.id}.json`,
+        type: 'DELETE',
+        success: deleteRow,
+        data: '',
+        contentType: 'json'
+    });
+    
+    function deleteRow() {
+        console.log(`successful DELETE of ${student.id}`);
+    }
 }
 
 function showView(view) {
@@ -227,48 +330,25 @@ function showView(view) {
     }
 }
 
-class Watcher {
-    constructor() {
-        this.sortIdx = null;
-        this.ascending = true;
-    }
-    
-    isSortedBy(idx, asc = true) {
-        if (this.sortIdx === idx) {
-            return asc === this.ascending;
-        }
-        
-        return false;
-    }
-    
-    sortedBy(idx, asc) {
-        this.sortIdx = idx;
-        this.ascending = asc;
-
-        // hide all sort glyphs then show the one on the sorted column
-        $(".sort-glyph").css("visibility", "hidden");
-        showSortGlyph(idx, asc);
-        
-        // set sorting cookies
-        Cookies.set("sort-idx", idx, {expires: 30});
-        Cookies.set("sort-asc", asc, {expires: 30});
-    }
+function addStudent(student) {
+    students.push(student);
+    $('#student-tbl tbody').append(genRow(student));
+    $('#student-tiles').append(genTile(student));
 }
 
-function finishRender(students) {
+function finishRender() {
     let sortIdx = Cookies.get("sort-idx");
     let sortAsc = Cookies.get("sort-asc") === "true";
     
+    addSorting();
+    
     if (sortIdx) {
         sortData(students, sortIdx, sortAsc);
-        repopTable(students);
+        repopTable();
     }
     
-    let watcher = new Watcher();
-    addSorting(students, watcher);
+    addEditing();
     
-    if (sortIdx) watcher.sortedBy(sortIdx, sortAsc);
-     
     $("a.thumbnail").click(function() {
         $("a.thumbnail").removeClass("active");
         $(this).addClass("active");
@@ -286,17 +366,16 @@ $(document).ready(() => {
     
     $.getJSON('/api/v1/students.json', (result) => {
         result = result.slice(0, PAGE_SIZE);
-        let count = 0;
-        let students = [];
         
-        for (let name of result) {
-            $.getJSON(`/api/v1/students/${name}`, (s) => {
-                students.push(s);
-                $('#student-tbl tbody').append(genRow(s));
-                $('#student-tiles').append(genTile(s));
+        let count = 0;
+        
+        for (let id of result) {
+            $.getJSON(`/api/v1/students/${id}.json`, (s) => {
+                s.id = id;
+                addStudent(s);
                 
                 if (++count === result.length) {
-                    finishRender(students);
+                    finishRender();
                 }
             });
         }
@@ -309,4 +388,31 @@ $(document).ready(() => {
     $("#opt-tiles").click(() => {
         showView("tiles");
     }).tooltip();
+    
+    $('#create-form').submit(function(event) {
+        let formData = $(this).serializeArray();
+        let stu = {};
+        
+        for (let pair of formData) {
+            stu[pair.name] = pair.value;
+        }
+        
+        switch (editMode) {
+            case "create": 
+                sendCreate(stu);
+                break;
+            case "edit": 
+                sendUpdate(stu);
+                break;
+        }
+        
+        $("#create-modal").modal('hide');
+        
+        event.preventDefault();
+    });
+    
+    $('#add-button').click(function(event) {
+        editMode = "create";
+        $('#create-modal').modal();
+    });
 });

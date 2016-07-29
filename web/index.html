@@ -44,6 +44,8 @@
 	<!-- initially hidden -->
 	<div id="student-tiles" class="row">
 	</div>
+	
+	<button id='add-button' class='btn btn-primary' type='button'>Add Student</button>
 </div>
 
 <div class="modal fade" id="spinner-modal">
@@ -51,6 +53,86 @@
 		<div class="modal-content">
 	    	<div class="modal-body">
 	        	<span class="glyphicon glyphicon-refresh glyphicon-spin"></span>
+	    	</div>
+		</div><!-- /.modal-content -->
+	</div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<div class="modal fade" id="create-modal">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-head">
+				<h2>Student Info</h2>
+			</div>
+	    	<div class="modal-body">
+	    		
+	        	<form id="create-form">
+	        		<div class="form-group row">
+	        			<label for="fname" class="col-xs-2 col-form-label">First Name</label>
+	        			<div class="col-xs-10">
+    						<input class="form-control" type="text" id="fname" name="fname" required>
+  						</div>
+	        		</div>
+	        		<div class="form-group row">
+	        			<label for="lname" class="col-xs-2 col-form-label">Last Name</label>
+	        			<div class="col-xs-10">
+    						<input class="form-control" type="text" id="lname" name="lname" required>
+  						</div>
+	        		</div>
+	        		<div class="form-group row">
+	        			<label for="start-date" class="col-xs-2 col-form-label">Start Date</label>
+	        			<div class="col-xs-10">
+    						<input class="form-control" type="date" id="start-date" name="startDate" required>
+  						</div>
+	        		</div>
+	        		<div class="form-group row">
+						<label for="year-select" class="col-xs-2 col-form-label">Year</label>
+						<div class="col-xs-10">
+							<select class="form-control custom-select" id="year-select" name="year">
+								<option value="1">Freshman</option>
+								<option value="2">Sophomore</option>
+								<option value="3">Junior</option>
+								<option value="4">Senior</option>
+							</select>
+						</div>
+					</div>
+	        		<div class="form-group row">
+	        			<label for="street" class="col-xs-2 col-form-label">Street</label>
+	        			<div class="col-xs-10">
+    						<input class="form-control" type="text" id="street" name="street" required>
+  						</div>
+	        		</div>
+	        		<div class="form-group row">
+	        			<label for="city" class="col-xs-2 col-form-label">City</label>
+	        			<div class="col-xs-10">
+    						<input class="form-control" type="text" id="city" name="city" required>
+  						</div>
+	        		</div>
+	        		<div class="form-group row">
+	        			<label for="state" class="col-xs-2 col-form-label">State</label>
+	        			<div class="col-xs-10">
+    						<input class="form-control" type="text" id="state" name="state" required>
+  						</div>
+	        		</div>
+	        		<div class="form-group row">
+	        			<label for="zipcode" class="col-xs-2 col-form-label">Zipcode</label>
+	        			<div class="col-xs-10">
+    						<input class="form-control" type="text" id="zipcode" name="zip" required>
+  						</div>
+	        		</div>
+	        		<div class="form-group row">
+	        			<label for="phone" class="col-xs-2 col-form-label">Phone Number</label>
+	        			<div class="col-xs-10">
+    						<input class="form-control" type="text" id="phone" name="phone" required>
+  						</div>
+	        		</div>
+        		  	<div class="form-group row"> 
+				   		<div class="col-sm-offset-2 col-sm-10">
+				    		<button type="submit" class="btn btn-default">Submit</button>
+				  		</div>
+					</div>
+	        	</form>
+	        	
 	    	</div>
 		</div><!-- /.modal-content -->
 	</div><!-- /.modal-dialog -->
