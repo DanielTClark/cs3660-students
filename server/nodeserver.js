@@ -40,7 +40,7 @@ console.log("Initializing server");
 let maxId;
 {
     let ids = fs.readdirSync(path.join(SRVPATH, 'students'))
-                    .map(f => parseInt(f.split('.')[0]));
+                .map(f => parseInt(f.split('.')[0]));
                     
     maxId = Math.max.apply(this, ids);
 }

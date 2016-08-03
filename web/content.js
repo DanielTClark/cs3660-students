@@ -33,7 +33,7 @@ let tblSpec = {
     
     // tranforms for if data should be displayed different than model
     "mappers": {
-        "startDate" : genDateCol,
+        "startDate" : s => formatDate(s.startDate, "MDY"),
         "year"      : s => nameForYear(s.year),     // real property
         "fullName"  : s => s.fname + ' ' + s.lname,  // pseudo property
         "edit"      : genEditCol,
@@ -95,6 +95,8 @@ class SortWatcher {
 let students = [];
 let watcher = new SortWatcher();
 let editMode = "create";
+let editId = null;
+let deletedStudents = [];
 
 function nameForYear(year) {
     let names = ['Freshman', 'Sophomore', 'Junior', 'Senior'];
@@ -157,11 +159,6 @@ function genRow(student) {
     return html;
 }
 
-function genDateCol(student) {
-    let date = new Date(student.startDate);
-    return date.toDateString();
-}
-
 function genEditCol(student) {
     return `
         <button id='edit-${student.id}-btn' type='button' class='btn btn-primary edit-btn'>
@@ -178,7 +175,7 @@ function genDelCol(student) {
 
 function genTile(student) {
     return `
-        <div class='col-xs-6 col-md-4 col-lg-3'>
+        <div id='tile-${student.id}' class='col-xs-6 col-md-4 col-lg-3'>
             <div class='dummy'></div>
             <a class='thumbnail'>
                 <div>
@@ -186,7 +183,7 @@ function genTile(student) {
                     <h3>${student.fname} ${student.lname}</h3>
                 </div>
                 
-                <p>${nameForYear(student.year)}, Started ${student.startDate}</p>
+                <p>${nameForYear(student.year)}, Started ${formatDate(student.startDate, "MDY")}</p>
                 
                 <p>${student.phone}</p>
                 
@@ -196,16 +193,12 @@ function genTile(student) {
         </div>`;
 }
 
-function populateTiles() {
-    let tiles = students.map(genTile);
-    $("#student-tiles").append(tiles.join(''));
-}
-
 // populates head then uses repopTable() to generate an empty body
 function initTable() {
     let tbl = $("#student-tbl");
     tbl.append(genHead());
     tbl.append("<tbody>");
+    addSorting();
 }
 
 // handles population and repopulation of body
@@ -257,47 +250,76 @@ function addSorting() {
             let asc = !watcher.isSortedBy(idx);
             sortData(students, idx, asc);
             repopTable(students);
+            students.map(addEditing);
         });
     }
 }
 
-function addEditing() {
-    // uses 'students' global
-    for (let s of students) {
-        $(`#edit-${s.id}-btn`).click(function(event) {
-            startEdit(s);
-        });
-        
-        $(`#del-${s.id}-btn`).click(function(event) {
-            console.log("DELETE clicked");
-            sendDelete(s);
-        });
-    }
+function addEditing(student) {
+    $(`#edit-${student.id}-btn`).click(function(event) {
+        startEdit(student);
+    });
+    
+    $(`#del-${student.id}-btn`).click(function(event) {
+        console.log("DELETE clicked");
+        sendDelete(student);
+    });
+}
+
+function formatDate(dateString, type) {
+    let date = new Date(dateString);
+    let day = ("0" + date.getDate()).slice(-2);
+    let month = ("0" + (date.getMonth() + 1)).slice(-2);
+    let year = date.getFullYear();
+    
+    if (type == "YMD") return year + '-' + month + '-' + day;
+    if (type == "MDY") return month + '/' + day + '/' + year;
 }
 
 function startEdit(student) {
+    editMode = "edit";
+    editId = student.id;
     
+    $('#fname').val(student.fname);
+    $('#lname').val(student.lname);
+    $('#start-date').val(formatDate(student.startDate, "YMD"));
+    $('#year-select').val(student.year);
+    $('#street').val(student.street);
+    $('#city').val(student.city);
+    $('#state').val(student.state);
+    $('#zipcode').val(student.zip);
+    $('#phone').val(student.phone);
+    
+    $('#create-modal').modal();
 }
 
 function sendCreate(student) {
+    student.id = undefined;
+    
     $.post('/api/v1/students', student, (data) => {
         student.id = data;
         addStudent(student);
+        applyExistingSort();
     }, 'json');
 }
 
 function sendUpdate(student) {
-    if (!student.id) throw "Student ID not set";
+    if (!editId) throw "Student ID not set";
+    
     $.ajax({
-        url: `/api/v1/students/${student.id}.json`,
+        url: `/api/v1/students/${editId}.json`,
         type: 'PUT',
         success: updateRow,
         data: student,
         contentType: 'json'
     });
     
-    function updateRow() {
-        console.log(`successful UPDATE of ${student.id}`);
+    function updateRow(data) {
+        console.log(`successful UPDATE of ${editId}`);
+        student.id = editId;
+        removeStudentById(editId);
+        addStudent(student);
+        applyExistingSort();
     }
 }
 
@@ -313,6 +335,8 @@ function sendDelete(student) {
     
     function deleteRow() {
         console.log(`successful DELETE of ${student.id}`);
+        removeStudentById(student.id);
+        deletedStudents.push(student);
     }
 }
 
@@ -336,23 +360,22 @@ function addStudent(student) {
     $('#student-tiles').append(genTile(student));
 }
 
-function finishRender() {
+function removeStudentById(stuId) {
+    $(`#row-${stuId}`).remove();
+    $(`#tile-${stuId}`).remove();
+    students = students.filter(s => s.id !== stuId);
+}
+
+function applyExistingSort() {
     let sortIdx = Cookies.get("sort-idx");
     let sortAsc = Cookies.get("sort-asc") === "true";
-    
-    addSorting();
     
     if (sortIdx) {
         sortData(students, sortIdx, sortAsc);
         repopTable();
     }
     
-    addEditing();
-    
-    $("a.thumbnail").click(function() {
-        $("a.thumbnail").removeClass("active");
-        $(this).addClass("active");
-    });
+    students.map(addEditing);
 }
 
 $(document).ready(() => {
@@ -375,7 +398,12 @@ $(document).ready(() => {
                 addStudent(s);
                 
                 if (++count === result.length) {
-                    finishRender();
+                    $("a.thumbnail").click(function() {
+                        $("a.thumbnail").removeClass("active");
+                        $(this).addClass("active");
+                    });
+                    
+                    applyExistingSort();
                 }
             });
         }
@@ -413,6 +441,17 @@ $(document).ready(() => {
     
     $('#add-button').click(function(event) {
         editMode = "create";
+        
+        $('#fname').val('');
+        $('#lname').val('');
+        $('#start-date').val('');
+        $('#year-select').val('');
+        $('#street').val('');
+        $('#city').val('');
+        $('#state').val('');
+        $('#zipcode').val('');
+        $('#phone').val('');
+
         $('#create-modal').modal();
     });
 });
