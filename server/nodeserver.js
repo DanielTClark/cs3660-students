@@ -42,7 +42,7 @@ let maxId;
     let ids = fs.readdirSync(path.join(SRVPATH, 'students'))
                 .map(f => parseInt(f.split('.')[0]));
                     
-    maxId = Math.max.apply(this, ids);
+    maxId = Math.max(...ids);
 }
 
 console.log(`Max student ID is: ${maxId}`);
@@ -64,8 +64,15 @@ app.use(express.static(WEBPATH));
 app.post('/api/v1/students', urlParser, (req, res) => {
     let student = req.body;
     console.log(student);
-    res.status(201) // Created
-       .json(zeroPad(++maxId));
+    
+    let id = zeroPad(++maxId);
+    fs.writeFile(path.join(SRVPATH, 'students', `${id}.json`), JSON.stringify(student), (err) => {
+        if (err) return res.sendStatus(500);
+        
+        res.status(201) // Created
+           .json(id);
+    });
+    
 });
 
 // Read
@@ -76,13 +83,18 @@ app.get('/api/v1/students/:studentId.json', (req, res) => {
 
 // Update
 app.put('/api/v1/students/:studentId.json', urlParser, (req, res) => {
+    let student = req.body;
     let id = req.params.studentId;
+    
+    fs.writeFile(path.join(SRVPATH, 'students', `${id}.json`), JSON.stringify(student));
+    
     res.sendStatus(204); // No Content
 });
 
 // Delete
 app.delete('/api/v1/students/:studentId.json', (req, res) => {
     let id = req.params.studentId;
+    fs.unlink(path.join(SRVPATH, 'students', `${id}.json`));
     res.sendStatus(204); // No Content
 });
 

@@ -161,14 +161,14 @@ function genRow(student) {
 
 function genEditCol(student) {
     return `
-        <button id='edit-${student.id}-btn' type='button' class='btn btn-primary edit-btn'>
+        <button id='edit-${student.id}-btn' type='button' class='btn btn-primary edit-btn' data-toggle="tooltip" data-placement="bottom" title="Edit">
             <span class="glyphicon glyphicon-edit"></span>
         </button>`;
 }
 
 function genDelCol(student) {
     return `
-        <button id='del-${student.id}-btn' type='button' class='btn btn-primary del-btn'>
+        <button id='del-${student.id}-btn' type='button' class='btn btn-primary del-btn' data-toggle="tooltip" data-placement="bottom" title="Delete">
             <span class="glyphicon glyphicon-trash"></span>
         </button>`;
 }
@@ -258,12 +258,12 @@ function addSorting() {
 function addEditing(student) {
     $(`#edit-${student.id}-btn`).click(function(event) {
         startEdit(student);
-    });
+        $(this).tooltip('hide');
+    }).tooltip();
     
     $(`#del-${student.id}-btn`).click(function(event) {
-        console.log("DELETE clicked");
-        sendDelete(student);
-    });
+        deleteStudent(student);
+    }).tooltip();
 }
 
 function formatDate(dateString, type) {
@@ -293,25 +293,25 @@ function startEdit(student) {
     $('#create-modal').modal();
 }
 
-function sendCreate(student) {
+function createStudent(student) {
     student.id = undefined;
     
     $.post('/api/v1/students', student, (data) => {
+        console.log(`successful CREATE of ${data}`);
         student.id = data;
         addStudent(student);
         applyExistingSort();
     }, 'json');
 }
 
-function sendUpdate(student) {
+function updateStudent(student) {
     if (!editId) throw "Student ID not set";
     
     $.ajax({
         url: `/api/v1/students/${editId}.json`,
         type: 'PUT',
         success: updateRow,
-        data: student,
-        contentType: 'json'
+        data: student
     });
     
     function updateRow(data) {
@@ -323,7 +323,7 @@ function sendUpdate(student) {
     }
 }
 
-function sendDelete(student) {
+function deleteStudent(student) {
     if (!student.id) throw "Student ID not set";
     $.ajax({
         url: `/api/v1/students/${student.id}.json`,
@@ -337,6 +337,7 @@ function sendDelete(student) {
         console.log(`successful DELETE of ${student.id}`);
         removeStudentById(student.id);
         deletedStudents.push(student);
+        $('#restore-button').prop('disabled', false);
     }
 }
 
@@ -419,6 +420,7 @@ $(document).ready(() => {
     
     $('#create-form').submit(function(event) {
         let formData = $(this).serializeArray();
+        console.log($(this).serialize());
         let stu = {};
         
         for (let pair of formData) {
@@ -427,10 +429,10 @@ $(document).ready(() => {
         
         switch (editMode) {
             case "create": 
-                sendCreate(stu);
+                createStudent(stu);
                 break;
             case "edit": 
-                sendUpdate(stu);
+                updateStudent(stu);
                 break;
         }
         
@@ -453,5 +455,17 @@ $(document).ready(() => {
         $('#phone').val('');
 
         $('#create-modal').modal();
+    });
+    
+    $('#restore-button').click(function(event) {
+        let student = deletedStudents.pop();
+        if (!student) return;
+        
+        student.id = undefined;
+        createStudent(student);
+        
+        if (deletedStudents.length === 0) {
+            $('#restore-button').prop('disabled', true);
+        }
     });
 });
