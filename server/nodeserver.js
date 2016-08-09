@@ -85,9 +85,7 @@ app.get('/api/v1/students/:studentId.json', (req, res) => {
 app.put('/api/v1/students/:studentId.json', urlParser, (req, res) => {
     let student = req.body;
     let id = req.params.studentId;
-    
     fs.writeFile(path.join(SRVPATH, 'students', `${id}.json`), JSON.stringify(student));
-    
     res.sendStatus(204); // No Content
 });
 
