@@ -1,11 +1,6 @@
 'use strict';
-
-/* 
-Author: Daniel Clark
-
-*/
-
-/* global $ Cookies */
+/* Author: Daniel Clark */
+/* global $ Cookies angular */
 
 const PAGE_SIZE = 10;
 
@@ -63,6 +58,27 @@ let tblSpec = {
         "phone"     : "glyphicon-sort-by-order"
     }
 };
+
+let app = angular.module("studentsApp", []);
+
+app.controller('studentsCtrl', ['$scope', '$http',
+function($scope, $http) {
+    $scope.tblSpec = tblSpec;
+    $scope.students = [];
+    
+    $http.get('/api/v1/students.json').then((res) => {
+        let list = res.data;
+        list.forEach((id) => {
+            $http.get(`/api/v1/students/${id}.json`).then((res) => {
+                $scope.students.push(res.data);
+            });
+        });
+    });
+    
+    $scope.transformFor = (rowName) => {
+        
+    }
+}]);
 
 class SortWatcher {
     constructor() {
@@ -272,8 +288,8 @@ function formatDate(dateString, type) {
     let month = ("0" + (date.getMonth() + 1)).slice(-2);
     let year = date.getFullYear();
     
-    if (type == "YMD") return year + '-' + month + '-' + day;
-    if (type == "MDY") return month + '/' + day + '/' + year;
+    if (type == "YMD") return `${year}-${month}-${day}`;
+    if (type == "MDY") return `${month}/${day}/${year}`;
 }
 
 function startEdit(student) {
@@ -378,6 +394,8 @@ function applyExistingSort() {
     
     students.map(addEditing);
 }
+
+
 
 $(document).ready(() => {
     if (window.TESTING) return;

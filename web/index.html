@@ -2,19 +2,20 @@
 <html lang="en-us">
 
 <head>
-<meta charset="utf-8">
-<title>Students</title>
-<script src="/lib/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="></script>
-<link href="/lib/bootstrap-3.3.6.min.css" rel="stylesheet" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7">
-<script src="/lib/bootstrap-3.3.6.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
-<script src="/lib/js.cookie-2.1.2.js"></script>
-
-<script src="sortComparators.js"></script>
-<script src="content.js"></script>
-<link href="index.css" rel="stylesheet">
+	<meta charset="utf-8">
+	<title>Students</title>
+	<script src="/lib/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="></script>
+	<link href="/lib/bootstrap-3.3.6.min.css" rel="stylesheet" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7">
+	<script src="/lib/bootstrap-3.3.6.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+	<script src="/lib/js.cookie-2.1.2.js"></script>
+	<script src="/lib/angular-1.6.2.min.js"></script>
+	
+	<script src="sortComparators.js"></script>
+	<script src="content.js"></script>
+	<link href="index.css" rel="stylesheet">
 </head>
 
-<body>
+<body ng-app="studentsApp" ng-controller="studentsCtrl">
 	
 <div class="container">
 	<div>
@@ -41,12 +42,32 @@
 	<table id="student-tbl" class="table table-striped table-hover">
 	</table>
 	
+	<table class="table table-striped table-hover">
+		<thead>
+			<tr>
+				<th ng-repeat="name in tblSpec.order">{{tblSpec.labels[name]}}
+					<span ng-class="tblSpec.sortIcon[name]" class="glyphicon"></span>
+				</th>
+			</tr>
+		</thead>
+		<tbody><tr id="row-0011"><td>Jared Anderson</td><td>11/23/1992</td><td>Senior</td><td>706 North 300 East</td><td>Williamsburg</td><td>ID</td><td>93673</td><td>793-3129</td><td>
+        <button id="edit-0011-btn" type="button" class="btn btn-primary edit-btn" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Edit">
+            <span class="glyphicon glyphicon-edit"></span>
+        </button></td><td>
+        <button id="del-0011-btn" type="button" class="btn btn-primary del-btn" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Delete">
+            <span class="glyphicon glyphicon-trash"></span>
+        </button></td></tr>
+        </tbody>
+	</table>
+	
 	<!-- initially hidden -->
 	<div id="student-tiles" class="row">
 	</div>
 	
 	<button id='add-button' class='btn btn-primary' type='button'>Add Student</button>
 	<button id='restore-button' class='btn btn-primary' type='button' disabled>Restore Student</button>
+
+	<pre>{{students | json}}</pre>
 </div>
 
 <div class="modal fade" id="spinner-modal">
