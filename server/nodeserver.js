@@ -35,7 +35,7 @@ const SRVPATH = __dirname;
 const app = express();
 const server = http.createServer(app);
 
-console.log("Initializing server");
+console.log("Initializing server...");
 
 let maxId;
 {

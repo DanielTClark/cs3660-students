@@ -62,6 +62,10 @@ a.thumbnail:-webkit-any-link {
 	visibility: hidden;
 }
 
+.sort-header:hover {
+    background-color: #33ccff;
+}
+
 .glyphicon-spin {
     -webkit-animation: spin 1000ms infinite linear;
     animation: spin 1000ms infinite linear;

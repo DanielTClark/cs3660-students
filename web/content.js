@@ -4,14 +4,13 @@
 
 const PAGE_SIZE = 10;
 
-let tblSpec = {
+const tblSpec = {
     // order of columns in table
     // these may either by real properties or pseudo-properties
     // if a pseudo-property is defined, a mapper must be defined to produce it
     // for a pseudo-property, you must also define a custom comparator and write it into genCmp
     "order": ["fullName", "startDate", "year",
-            "street", "city", "state", "zip", "phone",
-            "edit", "delete"],
+            "street", "city", "state", "zip", "phone"],
     
     "labels": {
         "fullName"  : "Name",
@@ -21,18 +20,14 @@ let tblSpec = {
         "city"      : "City",
         "state"     : "State",
         "zip"       : "Zip",
-        "phone"     : "Phone",
-        "edit"      : "",
-        "delete"    : ""
+        "phone"     : "Phone"
     },
     
     // tranforms for if data should be displayed different than model
     "mappers": {
         "startDate" : s => formatDate(s.startDate, "MDY"),
         "year"      : s => nameForYear(s.year),     // real property
-        "fullName"  : s => s.fname + ' ' + s.lname,  // pseudo property
-        "edit"      : genEditCol,
-        "delete"    : genDelCol
+        "fullName"  : s => s.fname + ' ' + s.lname  // pseudo property
     },
     
     // mapping of which comparator type to use for which column.
@@ -65,9 +60,11 @@ app.controller('studentsCtrl', ['$scope', '$http',
 function($scope, $http) {
     $scope.tblSpec = tblSpec;
     $scope.students = [];
+
+    $scope.sortedBy = 'fullName';
     
     $http.get('/api/v1/students.json').then((res) => {
-        let list = res.data;
+        let list = res.data.slice(0, 10);
         list.forEach((id) => {
             $http.get(`/api/v1/students/${id}.json`).then((res) => {
                 $scope.students.push(res.data);
@@ -75,8 +72,15 @@ function($scope, $http) {
         });
     });
     
-    $scope.transformFor = (rowName) => {
-        
+    $scope.studentMap = function(student) {
+        return tblSpec.order.map((idx) => {
+            // if mapping function is present, use it, else just get the named attribute
+            let transform = tblSpec.mappers[idx] ?
+                tblSpec.mappers[idx] :
+                () => student[idx];
+
+            return transform(student);
+        });
     }
 }]);
 
@@ -195,7 +199,7 @@ function genTile(student) {
             <div class='dummy'></div>
             <a class='thumbnail'>
                 <div>
-                    <img src='//placekitten.com/60/60' class='right img-rounded'>
+                    <img src='//placekitten.com/g/60/60' class='right img-rounded'>
                     <h3>${student.fname} ${student.lname}</h3>
                 </div>
                 
