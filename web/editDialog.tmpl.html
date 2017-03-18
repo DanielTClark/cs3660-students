@@ -1,0 +1,79 @@
+<md-dialog>
+    <md-toolbar>
+        <div class="md-toolbar-tools">
+            Student Information
+        </div>
+    </md-toolbar>
+
+    <form ng-submit="answer(stu)">
+        <md-dialog-content layout-padding>
+            <div layout="column">
+                <div layout="row">
+                    <md-input-container flex>
+                        <label>First Name</label>
+                        <input required ng-model="stu.fname">
+                    </md-input-container>
+
+                    <md-input-container flex>
+                        <label>Last Name</label>
+                        <input required ng-model="stu.lname">
+                    </md-input-container>
+                </div>
+
+                <div layout="row">
+                    <md-input-container flex>
+                        <label>Year</label>
+                        <md-select required ng-model="stu.year">
+                            <md-option selected value="1">Freshman</md-option>
+                            <md-option value="2">Sophomore</md-option>
+                            <md-option value="3">Junior</md-option>
+                            <md-option value="4">Senior</md-option>
+                        </md-select>
+                    </md-input-container>
+
+                    <md-input-container>
+                        <label>Start Date</label>
+                        <md-datepicker ng-model="stu.startDate"></md-datepicker>
+                    </md-input-container>
+                </div>
+
+                <md-input-container>
+                    <label>Phone</label>
+                    <input required ng-model="stu.phone">
+                </md-input-container>
+
+                <md-input-container>
+                    <label>Address</label>
+                    <input required ng-model="stu.street">
+                </md-input-container>
+
+                <div layout="row">
+                    <md-input-container>
+                        <label>City</label>
+                        <input required ng-model="stu.city">
+                    </md-input-container>
+
+                    <md-input-container>
+                        <label>State</label>
+                        <input required ng-model="stu.state">
+                    </md-input-container>
+
+                    <md-input-container>
+                        <label>Postal Code</label>
+                        <input required ng-model="stu.zip">
+                    </md-input-container>
+                </div>
+            </div>
+        </md-dialog-content>
+
+        <md-dialog-actions layout="row">
+            <span flex></span>
+            <md-button type="submit">
+                Save Student
+            </md-button>
+            <md-button ng-click="cancel()">
+                Discard
+            </md-button>
+        </md-dialog-actions>
+    </form>
+</md-dialog>

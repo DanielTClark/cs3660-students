@@ -23,6 +23,7 @@ const morgan      = require('morgan');
 const favicon     = require('serve-favicon');
 const compression = require('compression');
 const bodyParser  = require('body-parser');
+const jsonParser  = bodyParser.json();
 const urlParser   = bodyParser.urlencoded({ extended:false });
 const http        = require('http');
 const fs          = require('fs');
@@ -61,14 +62,14 @@ app.use(express.static(WEBPATH));
 
 // REST END POINTS
 // Create
-app.post('/api/v1/students', urlParser, (req, res) => {
+app.post('/api/v1/students', jsonParser, (req, res) => {
     let student = req.body;
     console.log(student);
-    
+
     let id = zeroPad(++maxId);
     fs.writeFile(path.join(SRVPATH, 'students', `${id}.json`), JSON.stringify(student), (err) => {
         if (err) return res.sendStatus(500);
-        
+
         res.status(201) // Created
            .json(id);
     });
@@ -82,8 +83,10 @@ app.get('/api/v1/students/:studentId.json', (req, res) => {
 });
 
 // Update
-app.put('/api/v1/students/:studentId.json', urlParser, (req, res) => {
+app.put('/api/v1/students/:studentId.json', jsonParser, (req, res) => {
     let student = req.body;
+    student.id = undefined;
+
     let id = req.params.studentId;
     fs.writeFile(path.join(SRVPATH, 'students', `${id}.json`), JSON.stringify(student));
     res.sendStatus(204); // No Content

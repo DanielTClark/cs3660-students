@@ -6,9 +6,7 @@ const PAGE_SIZE = 10;
 
 const tblSpec = {
     // order of columns in table
-    // these may either by real properties or pseudo-properties
-    // if a pseudo-property is defined, a mapper must be defined to produce it
-    // for a pseudo-property, you must also define a custom comparator and write it into genCmp
+    // these may be generated properties, but must have a mapper defined if they are
     "order": ["fullName", "startDate", "year",
             "street", "city", "state", "zip", "phone"],
     
@@ -23,56 +21,62 @@ const tblSpec = {
         "phone"     : "Phone"
     },
     
-    // tranforms for if data should be displayed different than model
+    // transforms for if data should be displayed different than model
     "mappers": {
         "startDate" : s => formatDate(s.startDate, "MDY"),
         "year"      : s => nameForYear(s.year),     // real property
-        "fullName"  : s => s.fname + ' ' + s.lname  // pseudo property
-    },
-    
-    // mapping of which comparator type to use for which column.
-    // comparators for real properties use original, not transformed, property values.
-    // compares strings after lowercasing them if not defined.
-    "comparators": {
-        "fullName"  : "fullName",
-        "year"      : "number",
-        "zip"       : "number",
-        "startDate" : "date",
-        "edit"      : "none",
-        "delete"    : "none"
-    },
-    
-    "sortIcon": {
-        "fullName"  : "glyphicon-sort-by-alphabet",
-        "startDate" : "glyphicon-sort-by-attributes",
-        "year"      : "glyphicon-sort-by-attributes",
-        "street"    : "glyphicon-sort-by-alphabet",
-        "city"      : "glyphicon-sort-by-alphabet",
-        "state"     : "glyphicon-sort-by-alphabet",
-        "zip"       : "glyphicon-sort-by-order",
-        "phone"     : "glyphicon-sort-by-order"
+        "fullName"  : s => s.fname + ' ' + s.lname  // generated property
     }
 };
 
-let app = angular.module("studentsApp", []);
+//TODO
+//Support for cookies
+//Add tooltips to edit, del and view buttons
+//Interface with server
 
-app.controller('studentsCtrl', ['$scope', '$http',
-function($scope, $http) {
+let app = angular.module("studentsApp", ['ngCookies', 'ngMaterial', 'md.data.table']);
+
+app.controller('studentsCtrl', ['$scope', '$http', '$cookies', '$mdDialog',
+($scope, $http, $cookies, $mdDialog) => {
     $scope.tblSpec = tblSpec;
     $scope.students = [];
+    $scope.deletedStudents = [];
+    $scope.selected = [];
 
     $scope.sortedBy = 'fullName';
-    
-    $http.get('/api/v1/students.json').then((res) => {
-        let list = res.data.slice(0, 10);
+    $scope.reverseSort = false;
+
+    let mode = $cookies.get('view');
+    $scope.viewMode = mode ? mode : 'table';
+
+    $scope.nameForYear = nameForYear;
+    $scope.formatDate = formatDate;
+
+    $scope.editingStudent = {};
+
+    $http.get('/api/v1/students.json').then(res => {
+        let list = res.data.slice(0, 12);
         list.forEach((id) => {
-            $http.get(`/api/v1/students/${id}.json`).then((res) => {
-                $scope.students.push(res.data);
+            $http.get(`/api/v1/students/${id}.json`).then(res => {
+                let student = res.data;
+                student.id = id;
+                student.year = student.year.toString();
+                student.startDate = new Date(student.startDate);
+                $scope.students.push(student);
             });
         });
     });
-    
-    $scope.studentMap = function(student) {
+
+    $scope.sortBy = header => {
+        if ($scope.sortedBy === header) {
+            $scope.reverseSort = !$scope.reverseSort;
+        } else {
+            $scope.sortedBy = header;
+            $scope.reverseSort = false;
+        }
+    };
+
+    $scope.studentToRow = student => {
         return tblSpec.order.map((idx) => {
             // if mapping function is present, use it, else just get the named attribute
             let transform = tblSpec.mappers[idx] ?
@@ -82,208 +86,123 @@ function($scope, $http) {
             return transform(student);
         });
     }
+
+    $scope.getterFor = header => {
+        return s => {
+            switch(header) {
+                case 'fullName' : return s.lname + s.fname;
+                default: return s[header];
+            }
+        };
+    };
+
+    $scope.startEditStudent = stu => {
+        $scope.editMode = 'update';
+        let copy = JSON.parse(JSON.stringify(stu));
+        copy.startDate = new Date(copy.startDate);
+        $scope.editingStudent = copy;
+
+        $('#create-modal').modal();
+    };
+
+    $scope.deleteStudent = stu => {
+        let idx = $scope.students.findIndex(s => s.id === stu.id);
+
+        $http.delete(`/api/v1/students/${stu.id}.json`).then(res => {
+            $scope.deletedStudents.push(stu);
+            $scope.students.splice(idx, 1);
+        });
+    };
+
+    $scope.restoreStudent = () => {
+        let stu = $scope.deletedStudents.pop();
+
+        $http.post('/api/v1/students', stu).then(res => {
+            console.log(res);
+            stu.id = res.data;
+            $scope.students.push(stu);
+        }, err => {
+            $scope.deletedStudents.push(stu);
+        });
+    };
+
+    $scope.showEditDialog = (ev, student) => {
+        $mdDialog.show({
+            controller: EditDialogController(student),
+            templateUrl: 'editDialog.tmpl.html',
+            parent: angular.element(document.body),
+            targetEvent: ev,
+            clickOutsideToClose: true
+        }).then(student => {
+            if (student.id) { // update existing student
+                let idx = $scope.students.findIndex(s => s.id === student.id);
+                if (idx < 0) return;
+                $http.put(`/api/v1/students/${student.id}.json`, student).then(res => {
+                    console.log(`Updated student ${student.id}`);
+                    $scope.students[idx] = student;
+                });
+            } else { // add as new student
+                $http.post('/api/v1/students', student).then(res => {
+                    student.id = res.data;
+                    $scope.students.push(student);
+                    console.log(`Added student ${student.id}`);
+                });
+            }
+        });
+    };
+
+    $scope.submitEditForm = () => {
+        if ($scope.editMode === 'create') {
+            $scope.students.push($scope.editingStudent);
+
+            $http.post('/api/v1/students', $scope.editingStudent).then(res => {
+                console.log(`Created student ${res}`);
+                $('#create-modal').modal('hide');
+            });
+
+        } else if ($scope.editMode === 'update') {
+            let idx = $scope.students.findIndex(s => s.id === $scope.editingStudent.id);
+            let stu = $scope.students[idx] = $scope.editingStudent;
+            $scope.editingStudent = {};
+
+            $http.put(`/api/v1/students/${stu.id}.json`, stu).then(res => {
+                console.log(`Updated student ${stu.id}`);
+                $('#create-modal').modal('hide');
+            });
+        }
+    };
 }]);
 
-class SortWatcher {
-    constructor() {
-        this.sortIdx = null;
-        this.ascending = true;
-    }
-    
-    isSortedBy(idx, asc = true) {
-        if (this.sortIdx === idx) {
-            return asc === this.ascending;
-        }
-        
-        return false;
-    }
-    
-    sortedBy(idx, asc) {
-        this.sortIdx = idx;
-        this.ascending = asc;
+function addStudent(student) {
 
-        // hide all sort glyphs then show the one on the sorted column
-        $(".sort-glyph").css("visibility", "hidden");
-        showSortGlyph(idx, asc);
-        
-        // set sorting cookies
-        Cookies.set("sort-idx", idx, {expires: 30});
-        Cookies.set("sort-asc", asc, {expires: 30});
-    }
 }
 
-let students = [];
-let watcher = new SortWatcher();
-let editMode = "create";
-let editId = null;
-let deletedStudents = [];
+function updateStudent(student) {
+
+}
+
+function EditDialogController(student) {
+    return ($scope, $mdDialog) => {
+        $scope.stu = student ? JSON.parse(JSON.stringify(student)) : {startDate: new Date()};
+        $scope.stu.startDate = new Date($scope.stu.startDate);
+
+        $scope.hide = function () {
+            $mdDialog.hide();
+        };
+
+        $scope.cancel = function () {
+            $mdDialog.cancel();
+        };
+
+        $scope.answer = function (answer) {
+            $mdDialog.hide(answer);
+        };
+    };
+}
 
 function nameForYear(year) {
     let names = ['Freshman', 'Sophomore', 'Junior', 'Senior'];
     return names[year - 1];
-}
-
-// factory method for comparators
-function genCmp(attr, type) {
-    /* global cmpNumber cmpFullName cmpDate cmpName */
-    if (type === 'none') return undefined;
-    
-    return (a, b) => {
-        let x = a[attr]; // x and y will be undefined for pseudo-properties
-        let y = b[attr];
-        
-        switch (type) {
-            case 'fullName' : return cmpFullName(a, b);
-            case 'number'   : return cmpNumber(x, y);
-            case 'date'     : return cmpDate(x, y);
-            default         : return cmpName(x, y);
-        }
-    };
-}
-
-function genHead() {
-    let html = "<thead><tr>";
-    
-    let cells = 
-        tblSpec.order.map((idx) => {
-            let html = `<th id='${idx}-head'>${tblSpec.labels[idx]}`;
-            if (tblSpec.comparators[idx] !== "none") {
-                html += `&nbsp;<span id='${idx}-glyph' class='sort-glyph glyphicon ${tblSpec.sortIcon[idx]}'></span>`;
-            }
-            html += '</th>';
-            return html;
-        });
-    
-    html += cells.join("");
-    html += "</tr></thead>";
-    
-    return html;
-}
-
-function genRow(student) {
-    let html = `<tr id='row-${student.id}'>`;
-    
-    let data = tblSpec.order.map((idx) => {
-        // if mapping function is present, use it, else just get the named attribute
-        let transform = tblSpec.mappers[idx] ?
-                        tblSpec.mappers[idx] :
-                        () => student[idx];
-        
-        return transform(student);
-    });
-    
-    html += data.map(d => `<td>${d}</td>`)
-                .join('');
-    
-    html += "</tr>";
-    return html;
-}
-
-function genEditCol(student) {
-    return `
-        <button id='edit-${student.id}-btn' type='button' class='btn btn-primary edit-btn' data-toggle="tooltip" data-placement="bottom" title="Edit">
-            <span class="glyphicon glyphicon-edit"></span>
-        </button>`;
-}
-
-function genDelCol(student) {
-    return `
-        <button id='del-${student.id}-btn' type='button' class='btn btn-primary del-btn' data-toggle="tooltip" data-placement="bottom" title="Delete">
-            <span class="glyphicon glyphicon-trash"></span>
-        </button>`;
-}
-
-function genTile(student) {
-    return `
-        <div id='tile-${student.id}' class='col-xs-6 col-md-4 col-lg-3'>
-            <div class='dummy'></div>
-            <a class='thumbnail'>
-                <div>
-                    <img src='//placekitten.com/g/60/60' class='right img-rounded'>
-                    <h3>${student.fname} ${student.lname}</h3>
-                </div>
-                
-                <p>${nameForYear(student.year)}, Started ${formatDate(student.startDate, "MDY")}</p>
-                
-                <p>${student.phone}</p>
-                
-                <p>${student.street}<br />
-                ${student.city} ${student.state}, ${student.zip}</p>
-            </a>
-        </div>`;
-}
-
-// populates head then uses repopTable() to generate an empty body
-function initTable() {
-    let tbl = $("#student-tbl");
-    tbl.append(genHead());
-    tbl.append("<tbody>");
-    addSorting();
-}
-
-// handles population and repopulation of body
-function repopTable() {
-    let tbl = $("#student-tbl");
-    
-    tbl.find("tbody").remove();
-    tbl.append("<tbody>");
-    
-    let rows = students.map(genRow);
-    
-    for (let r of rows) {
-        tbl.find("tbody").append(r);
-    }
-}
-
-function showSortGlyph(idx, asc) {
-    let glyph = $(`#${idx}-glyph`);
-    glyph.css('visibility', 'visible');
-    
-    let clsAsc = tblSpec.sortIcon[idx];
-    let clsDesc = clsAsc + '-alt';
-    
-    if (asc) {
-        glyph.removeClass(clsDesc);
-        glyph.addClass(clsAsc);
-    } else {
-        glyph.removeClass(clsAsc);
-        glyph.addClass(clsDesc);
-    }
-}
-
-function sortData(data, idx, asc = true) {
-    let type = tblSpec.comparators[idx];
-    let cmp = genCmp(idx, type);
-    
-    if (cmp === undefined) return;
-    
-    data.sort(cmp);
-    if (!asc) data.reverse();
-    
-    watcher.sortedBy(idx, asc);
-}
-
-function addSorting() {
-    // add click handler to each table header
-    for (let idx of tblSpec.order) {
-        $(`#${idx}-head`).click(() => {
-            let asc = !watcher.isSortedBy(idx);
-            sortData(students, idx, asc);
-            repopTable(students);
-            students.map(addEditing);
-        });
-    }
-}
-
-function addEditing(student) {
-    $(`#edit-${student.id}-btn`).click(function(event) {
-        startEdit(student);
-        $(this).tooltip('hide');
-    }).tooltip();
-    
-    $(`#del-${student.id}-btn`).click(function(event) {
-        deleteStudent(student);
-    }).tooltip();
 }
 
 function formatDate(dateString, type) {
@@ -296,198 +215,3 @@ function formatDate(dateString, type) {
     if (type == "MDY") return `${month}/${day}/${year}`;
 }
 
-function startEdit(student) {
-    editMode = "edit";
-    editId = student.id;
-    
-    $('#fname').val(student.fname);
-    $('#lname').val(student.lname);
-    $('#start-date').val(formatDate(student.startDate, "YMD"));
-    $('#year-select').val(student.year);
-    $('#street').val(student.street);
-    $('#city').val(student.city);
-    $('#state').val(student.state);
-    $('#zipcode').val(student.zip);
-    $('#phone').val(student.phone);
-    
-    $('#create-modal').modal();
-}
-
-function createStudent(student) {
-    student.id = undefined;
-    
-    $.post('/api/v1/students', student, (data) => {
-        console.log(`successful CREATE of ${data}`);
-        student.id = data;
-        addStudent(student);
-        applyExistingSort();
-    }, 'json');
-}
-
-function updateStudent(student) {
-    if (!editId) throw "Student ID not set";
-    
-    $.ajax({
-        url: `/api/v1/students/${editId}.json`,
-        type: 'PUT',
-        success: updateRow,
-        data: student
-    });
-    
-    function updateRow(data) {
-        console.log(`successful UPDATE of ${editId}`);
-        student.id = editId;
-        removeStudentById(editId);
-        addStudent(student);
-        applyExistingSort();
-    }
-}
-
-function deleteStudent(student) {
-    if (!student.id) throw "Student ID not set";
-    $.ajax({
-        url: `/api/v1/students/${student.id}.json`,
-        type: 'DELETE',
-        success: deleteRow,
-        data: '',
-        contentType: 'json'
-    });
-    
-    function deleteRow() {
-        console.log(`successful DELETE of ${student.id}`);
-        removeStudentById(student.id);
-        deletedStudents.push(student);
-        $('#restore-button').prop('disabled', false);
-    }
-}
-
-function showView(view) {
-    if (view === "table") {
-        $("#student-tiles").hide();
-        $("#student-tbl").show();
-        
-        Cookies.set("view", "table", {expires: 30});
-    } else if (view === "tiles") {
-        $("#student-tbl").hide();
-        $("#student-tiles").show();
-        
-        Cookies.set("view", "tiles", {expires: 30});
-    }
-}
-
-function addStudent(student) {
-    students.push(student);
-    $('#student-tbl tbody').append(genRow(student));
-    $('#student-tiles').append(genTile(student));
-}
-
-function removeStudentById(stuId) {
-    $(`#row-${stuId}`).remove();
-    $(`#tile-${stuId}`).remove();
-    students = students.filter(s => s.id !== stuId);
-}
-
-function applyExistingSort() {
-    let sortIdx = Cookies.get("sort-idx");
-    let sortAsc = Cookies.get("sort-asc") === "true";
-    
-    if (sortIdx) {
-        sortData(students, sortIdx, sortAsc);
-        repopTable();
-    }
-    
-    students.map(addEditing);
-}
-
-
-
-$(document).ready(() => {
-    if (window.TESTING) return;
-    
-    let view = Cookies.get('view');
-    showView(view ? view : 'table');
-    if (view === 'tiles') $('#opt-tiles').button('toggle');
-    
-    initTable(); // init table with no entries
-    
-    $.getJSON('/api/v1/students.json', (result) => {
-        result = result.slice(0, PAGE_SIZE);
-        
-        let count = 0;
-        
-        for (let id of result) {
-            $.getJSON(`/api/v1/students/${id}.json`, (s) => {
-                s.id = id;
-                addStudent(s);
-                
-                if (++count === result.length) {
-                    $("a.thumbnail").click(function() {
-                        $("a.thumbnail").removeClass("active");
-                        $(this).addClass("active");
-                    });
-                    
-                    applyExistingSort();
-                }
-            });
-        }
-    });
-    
-    $("#opt-table").click(() => {
-        showView("table");
-    }).tooltip();
-    
-    $("#opt-tiles").click(() => {
-        showView("tiles");
-    }).tooltip();
-    
-    $('#create-form').submit(function(event) {
-        let formData = $(this).serializeArray();
-        console.log($(this).serialize());
-        let stu = {};
-        
-        for (let pair of formData) {
-            stu[pair.name] = pair.value;
-        }
-        
-        switch (editMode) {
-            case "create": 
-                createStudent(stu);
-                break;
-            case "edit": 
-                updateStudent(stu);
-                break;
-        }
-        
-        $("#create-modal").modal('hide');
-        
-        event.preventDefault();
-    });
-    
-    $('#add-button').click(function(event) {
-        editMode = "create";
-        
-        $('#fname').val('');
-        $('#lname').val('');
-        $('#start-date').val('');
-        $('#year-select').val('');
-        $('#street').val('');
-        $('#city').val('');
-        $('#state').val('');
-        $('#zipcode').val('');
-        $('#phone').val('');
-
-        $('#create-modal').modal();
-    });
-    
-    $('#restore-button').click(function(event) {
-        let student = deletedStudents.pop();
-        if (!student) return;
-        
-        student.id = undefined;
-        createStudent(student);
-        
-        if (deletedStudents.length === 0) {
-            $('#restore-button').prop('disabled', true);
-        }
-    });
-});

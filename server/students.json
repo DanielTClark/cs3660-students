@@ -7,7 +7,7 @@
     "state": "ID",
     "zip": 93673,
     "phone": "673-3114",
-    "year": 4,
+    "year": "4",
     "id": 1
 }, {
     "fname": "Alex",
@@ -18,7 +18,7 @@
     "state": "ID",
     "zip": 93673,
     "phone": "679-2116",
-    "year": 2,
+    "year": "2",
     "id": 2
 }, {
     "fname": "Elizabeth",
@@ -29,7 +29,7 @@
     "state": "ID",
     "zip": 93679,
     "phone": "734-3219",
-    "year": 2,
+    "year": "2",
     "id": 3
 }, {
     "fname": "Emmelie",
@@ -40,7 +40,7 @@
     "state": "ID",
     "zip": 93667,
     "phone": "369-3334",
-    "year": 4,
+    "year": "4",
     "id": 4
 }, {
     "fname": "Anna",
@@ -51,7 +51,7 @@
     "state": "ID",
     "zip": 93667,
     "phone": "369-3334",
-    "year": 1,
+    "year": "1",
     "id": 5
 }, {
     "fname": "Daniel",
@@ -62,7 +62,7 @@
     "state": "ID",
     "zip": 93639,
     "phone": "739-2131",
-    "year": 1,
+    "year": "1",
     "id": 6
 }, {
     "fname": "Joseph",
@@ -73,7 +73,7 @@
     "state": "ID",
     "zip": 93619,
     "phone": "369-3629",
-    "year": 3,
+    "year": "3",
     "id": 7
 }, {
     "fname": "Jake",
@@ -84,7 +84,7 @@
     "state": "ID",
     "zip": 93699,
     "phone": "739-3171",
-    "year": 4,
+    "year": "4",
     "id": 8
 }, {
     "fname": "Jake",
@@ -95,7 +95,7 @@
     "state": "ID",
     "zip": 93699,
     "phone": "739-3171",
-    "year": 3,
+    "year": "3",
     "id": 9
 }, {
     "fname": "Sara",
@@ -106,7 +106,7 @@
     "state": "ID",
     "zip": 93673,
     "phone": "734-1097",
-    "year": 3,
+    "year": "3",
     "id": 10
 }, {
     "fname": "Jared",
@@ -117,7 +117,7 @@
     "state": "ID",
     "zip": 93673,
     "phone": "793-3129",
-    "year": 4,
+    "year": "4",
     "id": 11
 }, {
     "fname": "So-Ri",
@@ -128,7 +128,7 @@
     "state": "ID",
     "zip": 93673,
     "phone": "793-3129",
-    "year": 3,
+    "year": "3",
     "id": 12
 }, {
     "fname": "Edward",
@@ -139,7 +139,7 @@
     "state": "ID",
     "zip": 93673,
     "phone": "733-0469",
-    "year": 4,
+    "year": "4",
     "id": 13
 }, {
     "fname": "Joe",
@@ -150,7 +150,7 @@
     "state": "ID",
     "zip": 93673,
     "phone": "679-1629",
-    "year": 3,
+    "year": "3",
     "id": 14
 }, {
     "fname": "Jon",
@@ -161,7 +161,7 @@
     "state": "ID",
     "zip": 93620,
     "phone": "239-3392",
-    "year": 3,
+    "year": "3",
     "id": 15
 }, {
     "fname": "Jenna",
@@ -172,7 +172,7 @@
     "state": "ID",
     "zip": 93637,
     "phone": "439-2221",
-    "year": 3,
+    "year": "3",
     "id": 16
 }, {
     "fname": "Aonna",
@@ -183,7 +183,7 @@
     "state": "ID",
     "zip": 93667,
     "phone": "369-3336",
-    "year": 4,
+    "year": "4",
     "id": 17
 }, {
     "fname": "Josh",
@@ -194,7 +194,7 @@
     "state": "ID",
     "zip": 93673,
     "phone": "733-0336",
-    "year": 3,
+    "year": "3",
     "id": 18
 }, {
     "fname": "Josie",
@@ -205,7 +205,7 @@
     "state": "ID",
     "zip": 93673,
     "phone": "679-0200",
-    "year": 4,
+    "year": "4",
     "id": 19
 }, {
     "fname": "Julius",
@@ -216,7 +216,7 @@
     "state": "ID",
     "zip": 93673,
     "phone": "733-6790",
-    "year": 4,
+    "year": "4",
     "id": 20
 }, {
     "fname": "Derrick",
@@ -227,7 +227,7 @@
     "state": "ID",
     "zip": 93632,
     "phone": "734-3176",
-    "year": 4,
+    "year": "4",
     "id": 21
 }, {
     "fname": "John",
@@ -238,7 +238,7 @@
     "state": "ID",
     "zip": 93673,
     "phone": "734-1643",
-    "year": 4,
+    "year": "4",
     "id": 22
 }, {
     "fname": "Gordon",
@@ -249,7 +249,7 @@
     "state": "ID",
     "zip": 94321,
     "phone": "673-2344",
-    "year": 4,
+    "year": "4",
     "id": 23
 }, {
     "fname": "Thomas",
@@ -260,7 +260,7 @@
     "state": "PA",
     "zip": 93632,
     "phone": "679-4000",
-    "year": 4,
+    "year": "4",
     "id": 24
 }, {
     "fname": "Rick",
@@ -271,7 +271,7 @@
     "state": "KY",
     "zip": 93622,
     "phone": "797-6914",
-    "year": 4,
+    "year": "4",
     "id": 25
 }, {
     "fname": "Nate",
@@ -282,6 +282,6 @@
     "state": "AK",
     "zip": 93679,
     "phone": "673-4490",
-    "year": 3,
+    "year": "3",
     "id": 26
 }]
