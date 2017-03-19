@@ -109,9 +109,11 @@ app.get('*', (req, res) => {
     res.status(404).sendFile(path.join(WEBPATH, '404.html'));
 });
 
+let port = process.env.PORT ? process.env.PORT : 80;
+
 // LISTEN
-server.listen(process.env.PORT, process.env.IP, () => {
-   console.log(`Server listening on PORT ${process.env.PORT}`); 
+server.listen(port, process.env.IP, () => {
+   console.log(`Server listening on PORT ${port}`);
 });
 
 // SIGNAL HANDLING
