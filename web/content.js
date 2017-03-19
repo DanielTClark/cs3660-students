@@ -7,25 +7,25 @@ const PAGE_SIZE = 10;
 const tblSpec = {
     // order of columns in table
     // these may be generated properties, but must have a mapper defined if they are
-    "order": ["fullName", "startDate", "year",
+    headers: ["fullName", "startDate", "year",
             "street", "city", "state", "zip", "phone"],
     
-    "labels": {
-        "fullName"  : "Name",
-        "startDate" : "Start Date",
-        "year"      : "Year",
-        "street"    : "Street",
-        "city"      : "City",
-        "state"     : "State",
-        "zip"       : "Zip",
-        "phone"     : "Phone"
+    labels: {
+        fullName  : "Name",
+        startDate : "Start Date",
+        year      : "Year",
+        street    : "Street",
+        city      : "City",
+        state     : "State",
+        zip       : "Zip",
+        phone     : "Phone"
     },
     
     // transforms for if data should be displayed different than model
-    "mappers": {
-        "startDate" : s => formatDate(s.startDate, "MDY"),
-        "year"      : s => nameForYear(s.year),     // real property
-        "fullName"  : s => s.fname + ' ' + s.lname  // generated property
+    mappers: {
+        fullName  : s => s.fname + ' ' + s.lname,  // generated property
+        startDate : s => formatDate(s.startDate, "MDY"),
+        year      : s => nameForYear(s.year)     // real property
     }
 };
 
@@ -46,13 +46,11 @@ app.controller('studentsCtrl', ['$scope', '$http', '$cookies', '$mdDialog',
     $scope.sortedBy = 'fullName';
     $scope.reverseSort = false;
 
-    let mode = $cookies.get('view');
-    $scope.viewMode = mode ? mode : 'table';
+    let mode = $cookies.get('tabIdx');
+    $scope.tabIdx = mode ? mode : 0;
 
     $scope.nameForYear = nameForYear;
     $scope.formatDate = formatDate;
-
-    $scope.editingStudent = {};
 
     $http.get('/api/v1/students.json').then(res => {
         let list = res.data.slice(0, 12);
@@ -67,17 +65,28 @@ app.controller('studentsCtrl', ['$scope', '$http', '$cookies', '$mdDialog',
         });
     });
 
-    $scope.sortBy = header => {
-        if ($scope.sortedBy === header) {
-            $scope.reverseSort = !$scope.reverseSort;
+    $scope.saveTab = idx => {
+        $cookies.put('tabIdx', idx);
+    };
+
+    $scope.getterFor = header => {
+        if (header[0] === '-') {
+            header = header.slice(1);
+            $scope.orderDesc = true;
         } else {
-            $scope.sortedBy = header;
-            $scope.reverseSort = false;
+            $scope.orderDesc = false;
         }
+
+        return student => {
+            switch (header) {
+                case 'fullName': return student.lname + ' ' + student.fname;
+                default: return student[header];
+            }
+        };
     };
 
     $scope.studentToRow = student => {
-        return tblSpec.order.map((idx) => {
+        return tblSpec.headers.map((idx) => {
             // if mapping function is present, use it, else just get the named attribute
             let transform = tblSpec.mappers[idx] ?
                 tblSpec.mappers[idx] :
@@ -86,24 +95,6 @@ app.controller('studentsCtrl', ['$scope', '$http', '$cookies', '$mdDialog',
             return transform(student);
         });
     }
-
-    $scope.getterFor = header => {
-        return s => {
-            switch(header) {
-                case 'fullName' : return s.lname + s.fname;
-                default: return s[header];
-            }
-        };
-    };
-
-    $scope.startEditStudent = stu => {
-        $scope.editMode = 'update';
-        let copy = JSON.parse(JSON.stringify(stu));
-        copy.startDate = new Date(copy.startDate);
-        $scope.editingStudent = copy;
-
-        $('#create-modal').modal();
-    };
 
     $scope.deleteStudent = stu => {
         let idx = $scope.students.findIndex(s => s.id === stu.id);
@@ -151,35 +142,7 @@ app.controller('studentsCtrl', ['$scope', '$http', '$cookies', '$mdDialog',
         });
     };
 
-    $scope.submitEditForm = () => {
-        if ($scope.editMode === 'create') {
-            $scope.students.push($scope.editingStudent);
-
-            $http.post('/api/v1/students', $scope.editingStudent).then(res => {
-                console.log(`Created student ${res}`);
-                $('#create-modal').modal('hide');
-            });
-
-        } else if ($scope.editMode === 'update') {
-            let idx = $scope.students.findIndex(s => s.id === $scope.editingStudent.id);
-            let stu = $scope.students[idx] = $scope.editingStudent;
-            $scope.editingStudent = {};
-
-            $http.put(`/api/v1/students/${stu.id}.json`, stu).then(res => {
-                console.log(`Updated student ${stu.id}`);
-                $('#create-modal').modal('hide');
-            });
-        }
-    };
 }]);
-
-function addStudent(student) {
-
-}
-
-function updateStudent(student) {
-
-}
 
 function EditDialogController(student) {
     return ($scope, $mdDialog) => {
