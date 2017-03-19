@@ -2,142 +2,100 @@
 <html lang="en-us">
 
 <head>
-<meta charset="utf-8">
-<title>Students</title>
-<script src="/lib/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="></script>
-<link href="/lib/bootstrap-3.3.6.min.css" rel="stylesheet" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7">
-<script src="/lib/bootstrap-3.3.6.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
-<script src="/lib/js.cookie-2.1.2.js"></script>
+	<meta charset="utf-8">
+	<title>Students</title>
 
-<script src="sortComparators.js"></script>
-<script src="content.js"></script>
-<link href="index.css" rel="stylesheet">
+	<link rel="stylesheet" href="./bower_components/angular-material/angular-material.min.css">
+    <link rel="stylesheet" href="./bower_components/angular-material-data-table/dist/md-data-table.min.css">
+
+    <!-- Angular 1.6.3 -->
+    <script src="./bower_components/angular/angular.min.js"></script>
+    <script src="./bower_components/angular-animate/angular-animate.min.js"></script>
+    <script src="./bower_components/angular-aria/angular-aria.min.js"></script>
+    <script src="./bower_components/angular-messages/angular-messages.min.js"></script>
+    <script src="./bower_components/angular-cookies/angular-cookies.min.js"></script>
+
+	<!-- Angular Material 1.1.3 -->
+	<script src="./bower_components/angular-material/angular-material.min.js"></script>
+    <script src="./bower_components/angular-material-data-table/dist/md-data-table.min.js"></script>
+
+    <!-- Angular App -->
+	<script src="content.js"></script>
+	<link href="index.css" rel="stylesheet">
 </head>
 
-<body>
-	
-<div class="container">
-	<div>
-		<div class="right btn-group" data-toggle="buttons">
-			<label class="btn btn-primary active" id="opt-table"
-				   data-toggle="tooltip" data-placement="bottom" title="Table View"
-	  			   data-container="body">
-	    		<input type="radio" name="options" checked>
-	    		<span class="glyphicon glyphicon-th-list"></span>
-	  		</label>
-	  		<label class="btn btn-primary" id="opt-tiles" 
-	  			   data-toggle="tooltip" data-placement="bottom" title="Tiles View"
-	  			   data-container="body">
-	    		<input type="radio" name="options">
-	    		<span class="glyphicon glyphicon-th"></span>
-	  		</label>
-		</div>
-			
-		<h2>
-			Students
-		</h2>
-	</div>
-	
-	<table id="student-tbl" class="table table-striped table-hover">
-	</table>
-	
-	<!-- initially hidden -->
-	<div id="student-tiles" class="row">
-	</div>
-	
-	<button id='add-button' class='btn btn-primary' type='button'>Add Student</button>
-	<button id='restore-button' class='btn btn-primary' type='button' disabled>Restore Student</button>
-</div>
+<body ng-app="studentsApp" ng-controller="studentsCtrl" ng-cloak>
 
-<div class="modal fade" id="spinner-modal">
-	<div class="modal-dialog modal-sm" role="document">
-		<div class="modal-content">
-	    	<div class="modal-body">
-	        	<span class="glyphicon glyphicon-refresh glyphicon-spin"></span>
-	    	</div>
-		</div><!-- /.modal-content -->
-	</div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
+    <div layout="row">
+        <md-content layout="column" class="md-padding" flex-offset="15" flex="70">
+            <md-toolbar md-scroll-shrink>
+                <div class="md-toolbar-tools">Students</div>
+            </md-toolbar>
 
-<div class="modal fade" id="create-modal">
-	<div class="modal-dialog modal-lg" role="document">
-		<div class="modal-content">
-			<div class="modal-head">
-				<h2>Student Info</h2>
-			</div>
-	    	<div class="modal-body">
-	    		
-	        	<form id="create-form">
-	        		<div class="form-group row">
-	        			<label for="fname" class="col-xs-2 col-form-label">First Name</label>
-	        			<div class="col-xs-10">
-    						<input class="form-control" type="text" id="fname" name="fname" required>
-  						</div>
-	        		</div>
-	        		<div class="form-group row">
-	        			<label for="lname" class="col-xs-2 col-form-label">Last Name</label>
-	        			<div class="col-xs-10">
-    						<input class="form-control" type="text" id="lname" name="lname" required>
-  						</div>
-	        		</div>
-	        		<div class="form-group row">
-	        			<label for="start-date" class="col-xs-2 col-form-label">Start Date</label>
-	        			<div class="col-xs-10">
-    						<input class="form-control" type="date" id="start-date" name="startDate" required>
-  						</div>
-	        		</div>
-	        		<div class="form-group row">
-						<label for="year-select" class="col-xs-2 col-form-label">Year</label>
-						<div class="col-xs-10">
-							<select class="form-control custom-select" id="year-select" name="year">
-								<option value="1">Freshman</option>
-								<option value="2">Sophomore</option>
-								<option value="3">Junior</option>
-								<option value="4">Senior</option>
-							</select>
-						</div>
-					</div>
-	        		<div class="form-group row">
-	        			<label for="street" class="col-xs-2 col-form-label">Street</label>
-	        			<div class="col-xs-10">
-    						<input class="form-control" type="text" id="street" name="street" required>
-  						</div>
-	        		</div>
-	        		<div class="form-group row">
-	        			<label for="city" class="col-xs-2 col-form-label">City</label>
-	        			<div class="col-xs-10">
-    						<input class="form-control" type="text" id="city" name="city" required>
-  						</div>
-	        		</div>
-	        		<div class="form-group row">
-	        			<label for="state" class="col-xs-2 col-form-label">State</label>
-	        			<div class="col-xs-10">
-    						<input class="form-control" type="text" id="state" name="state" required>
-  						</div>
-	        		</div>
-	        		<div class="form-group row">
-	        			<label for="zipcode" class="col-xs-2 col-form-label">Zipcode</label>
-	        			<div class="col-xs-10">
-    						<input class="form-control" type="text" id="zipcode" name="zip" required>
-  						</div>
-	        		</div>
-	        		<div class="form-group row">
-	        			<label for="phone" class="col-xs-2 col-form-label">Phone Number</label>
-	        			<div class="col-xs-10">
-    						<input class="form-control" type="text" id="phone" name="phone" required>
-  						</div>
-	        		</div>
-        		  	<div class="form-group row"> 
-				   		<div class="col-sm-offset-2 col-sm-10">
-				    		<button type="submit" class="btn btn-default">Submit</button>
-				  		</div>
-					</div>
-	        	</form>
-	        	
-	    	</div>
-		</div><!-- /.modal-content -->
-	</div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
+            <md-tabs md-dynamic-height md-border-bottom md-selected="tabIdx">
+                <md-tab label="table" name="table" ng-click="saveTab(tabIdx)">
+
+                    <md-table-container>
+                        <table md-table md-row-select ng-model="selected">
+                            <thead md-head md-order="sortedBy">
+                                <tr md-row>
+                                    <th md-column ng-repeat="header in tblSpec.headers" md-order-by="{{header}}">{{tblSpec.labels[header]}}</th>
+                                </tr>
+                            </thead>
+                            <tbody md-body>
+                                <tr md-row md-auto-select md-select="student" md-select-id="student.id"
+                                    ng-repeat="student in students | orderBy:[getterFor(sortedBy)]:orderDesc">
+                                    <td md-cell ng-repeat="data in studentToRow(student)">{{data}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </md-table-container>
+
+                    <div layout="column" layout-gt-xs="row">
+                        <md-button class="md-raised edit-button" ng-disabled="!selected[0]" ng-click="showEditDialog($event, selected[0])">Edit Student</md-button>
+                        <md-button class="md-raised edit-button" ng-disabled="!selected[0]" ng-click="deleteStudent(selected[0])">Delete Student</md-button>
+                    </div>
+                </md-tab>
+                <md-tab label="cards" name="cards" ng-click="saveTab(tabIdx)">
+
+                    <div layout="row" layout-wrap>
+                        <md-card ng-repeat="student in students">
+                            <md-card-title>
+                                <md-card-title-text>
+                                    <span class="md-headline">{{student.fname + ' ' + student.lname}}</span>
+                                    <span class="md-subhead">
+                                        {{nameForYear(student.year)}}<br>
+                                        Started: {{formatDate(student.startDate, "MDY")}}<br>
+                                        Phone: {{student.phone}}<br>
+                                        {{student.street}}<br>
+                                        {{student.city}}, {{student.state}} {{student.zip}}<br>
+                                    </span>
+                                </md-card-title-text>
+                                <md-card-title-media>
+                                    <div layout-padding class="md-media-md card-media">
+                                        <img src="http://lorempixel.com/80/80/">
+                                    </div>
+                                </md-card-title-media>
+                            </md-card-title>
+                            <md-card-actions layout="row" layout-align="end center">
+                                <md-button ng-click="showEditDialog($event, student)">Edit</md-button>
+                                <md-button ng-click="deleteStudent(student)">Delete</md-button>
+                            </md-card-actions>
+                        </md-card>
+                    </div>
+
+                </md-tab>
+            </md-tabs>
+
+            <div layout="column" layout-gt-xs="row">
+                <md-button ng-click="showEditDialog($event)" id="add-button" class="md-raised edit-button">Add Student</md-button>
+                <md-button ng-click="restoreStudent()" id="restore-button" class="md-raised edit-button" ng-disabled="deletedStudents.length === 0">Restore Student</md-button>
+            </div>
+
+            <pre>{{viewMode | json}}</pre>
+
+        </md-content>
+    </div>
 
 </body>
 </html>
