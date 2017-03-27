@@ -53,7 +53,7 @@ app.controller('studentsCtrl', ['$scope', '$http', '$cookies', '$mdDialog',
     $scope.formatDate = formatDate;
 
     $http.get('/api/v1/students.json').then(res => {
-        let list = res.data.slice(0, 12);
+        let list = res.data.slice(0, 10);
         list.forEach((id) => {
             $http.get(`/api/v1/students/${id}.json`).then(res => {
                 let student = res.data;
@@ -142,6 +142,31 @@ app.controller('studentsCtrl', ['$scope', '$http', '$cookies', '$mdDialog',
         });
     };
 
+}]);
+
+app.directive("mdCardColumns", ['$mdMedia', ($mdMedia) => {
+    return {
+        restrict: 'E',
+        scope: { 'repeat': '=', 'edit': '=', 'delete': '=' },
+        templateUrl: 'md-columns.html',
+        link: (scope, element, attrs, ctrl, transclude) => {
+            scope.repeatItem = attrs.repeatItem;
+
+            scope.columns = () => {
+                if ($mdMedia('lg')) return [0,1,2];
+                if ($mdMedia('md')) return [0,1];
+                if ($mdMedia('sm')) return [0];
+                if ($mdMedia('xs')) return [0];
+            };
+
+            scope.data = (idx) => {
+                let size = scope.repeat.length;
+                let c = scope.columns().length;
+                let part = Math.ceil(size / c);
+                return scope.repeat.slice(idx * part, (idx + 1) * part);
+            };
+        }
+    };
 }]);
 
 function EditDialogController(student) {

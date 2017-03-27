@@ -57,33 +57,7 @@
                     </div>
                 </md-tab>
                 <md-tab label="cards" name="cards" ng-click="saveTab(tabIdx)">
-
-                    <div layout="row" layout-wrap>
-                        <md-card ng-repeat="student in students">
-                            <md-card-title>
-                                <md-card-title-text>
-                                    <span class="md-headline">{{student.fname + ' ' + student.lname}}</span>
-                                    <span class="md-subhead">
-                                        {{nameForYear(student.year)}}<br>
-                                        Started: {{formatDate(student.startDate, "MDY")}}<br>
-                                        Phone: {{student.phone}}<br>
-                                        {{student.street}}<br>
-                                        {{student.city}}, {{student.state}} {{student.zip}}<br>
-                                    </span>
-                                </md-card-title-text>
-                                <md-card-title-media>
-                                    <div layout-padding class="md-media-md card-media">
-                                        <img src="http://lorempixel.com/80/80/">
-                                    </div>
-                                </md-card-title-media>
-                            </md-card-title>
-                            <md-card-actions layout="row" layout-align="end center">
-                                <md-button ng-click="showEditDialog($event, student)">Edit</md-button>
-                                <md-button ng-click="deleteStudent(student)">Delete</md-button>
-                            </md-card-actions>
-                        </md-card>
-                    </div>
-
+                    <md-card-columns repeat="students" edit="showEditDialog" delete="deleteStudent"></md-card-columns>
                 </md-tab>
             </md-tabs>
 

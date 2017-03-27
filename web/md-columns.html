@@ -1,0 +1,29 @@
+<div layout="row">
+    <div ng-repeat="col in columns()" layout="column" flex>
+        <div ng-repeat="$item in data(col)">
+            <md-card>
+                <md-card-title>
+                    <md-card-title-text>
+                        <span class="md-headline">{{$item.fname + ' ' + $item.lname}}</span>
+                        <span class="md-subhead">
+                                {{nameForYear($item.year)}}<br>
+                                Started: {{formatDate($item.startDate, "MDY")}}<br>
+                                Phone: {{$item.phone}}<br>
+                                {{$item.street}}<br>
+                                {{$item.city}}, {{$item.state}} {{$item.zip}}<br>
+                            </span>
+                    </md-card-title-text>
+                    <md-card-title-media>
+                        <div layout-padding class="md-media-md card-media">
+                            <img src="http://lorempixel.com/80/80/">
+                        </div>
+                    </md-card-title-media>
+                </md-card-title>
+                <md-card-actions layout="row" layout-align="end center">
+                    <md-button ng-click="edit($event, $item)">Edit</md-button>
+                    <md-button ng-click="delete($item)">Delete</md-button>
+                </md-card-actions>
+            </md-card>
+        </div>
+    </div>
+</div>
