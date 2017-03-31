@@ -29,11 +29,6 @@ const tblSpec = {
     }
 };
 
-//TODO
-//Support for cookies
-//Add tooltips to edit, del and view buttons
-//Interface with server
-
 let app = angular.module("studentsApp", ['ngCookies', 'ngMaterial', 'md.data.table']);
 
 app.controller('studentsCtrl', ['$scope', '$http', '$cookies', '$mdDialog',
@@ -94,7 +89,7 @@ app.controller('studentsCtrl', ['$scope', '$http', '$cookies', '$mdDialog',
 
             return transform(student);
         });
-    }
+    };
 
     $scope.deleteStudent = stu => {
         let idx = $scope.students.findIndex(s => s.id === stu.id);

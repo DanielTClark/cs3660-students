@@ -18,18 +18,24 @@ npm install
 npm start
 
 */
+'use strict';
 const express     = require('express');
 const morgan      = require('morgan');
 const favicon     = require('serve-favicon');
 const compression = require('compression');
-const bodyParser  = require('body-parser');
-const jsonParser  = bodyParser.json();
-const urlParser   = bodyParser.urlencoded({ extended:false });
 const http        = require('http');
 const fs          = require('fs');
 const path        = require('path');
+const nconf       = require('nconf');
+const router      = require('./studentsRest.js');
 
-const WEBPATH = path.join(__dirname, '../web');
+nconf.argv().env().file({ file: 'serverconf.json' });
+
+nconf.defaults({
+    'webpath': '../web'
+});
+
+const WEBPATH = nconf.get('webpath');
 const SRVPATH = __dirname;
 
 // INIT
@@ -37,16 +43,6 @@ const app = express();
 const server = http.createServer(app);
 
 console.log("Initializing server...");
-
-let maxId;
-{
-    let ids = fs.readdirSync(path.join(SRVPATH, 'students'))
-                .map(f => parseInt(f.split('.')[0]));
-                    
-    maxId = Math.max(...ids);
-}
-
-console.log(`Max student ID is: ${maxId}`);
 
 // MIDDLEWARE
 app.use(morgan('dev'));
@@ -60,52 +56,7 @@ app.use((req, res, next) => {
 app.use(favicon(path.join(WEBPATH, 'favicon.ico')));
 app.use(express.static(WEBPATH));
 
-// REST END POINTS
-// Create
-app.post('/api/v1/students', jsonParser, (req, res) => {
-    let student = req.body;
-    console.log(student);
-
-    let id = zeroPad(++maxId);
-    fs.writeFile(path.join(SRVPATH, 'students', `${id}.json`), JSON.stringify(student), (err) => {
-        if (err) return res.sendStatus(500);
-
-        res.status(201) // Created
-           .json(id);
-    });
-    
-});
-
-// Read
-app.get('/api/v1/students/:studentId.json', (req, res) => {
-    let id = req.params.studentId;
-    res.sendFile(path.join(SRVPATH, 'students', `${id}.json`));
-});
-
-// Update
-app.put('/api/v1/students/:studentId.json', jsonParser, (req, res) => {
-    let student = req.body;
-    student.id = undefined;
-
-    let id = req.params.studentId;
-    fs.writeFile(path.join(SRVPATH, 'students', `${id}.json`), JSON.stringify(student));
-    res.sendStatus(204); // No Content
-});
-
-// Delete
-app.delete('/api/v1/students/:studentId.json', (req, res) => {
-    let id = req.params.studentId;
-    fs.unlink(path.join(SRVPATH, 'students', `${id}.json`));
-    res.sendStatus(204); // No Content
-});
-
-// List
-app.get('/api/v1/students.json', (req, res) => {
-    fs.readdir(path.join(SRVPATH, 'students'), (err, files) => {
-        if (err) return res.sendStatus(404);
-        res.send(files.map(f => f.split('.')[0]));
-    });
-});
+app.use('/api/v1', router);
 
 // 404
 app.get('*', (req, res) => {
@@ -129,10 +80,4 @@ function shutdown() {
         console.log('\nServer terminated');
         process.exit();
     });
-}
-
-// HELPER FUNCTIONS
-function zeroPad(num) {
-    let str = '0000' + num;
-    return str.substr(-4);
 }
