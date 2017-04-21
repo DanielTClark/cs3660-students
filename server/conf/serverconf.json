@@ -1,3 +1,4 @@
 {
-    "webpath": "../web"
+    "webpath": "../web",
+    "dao": "./data/sqlDao.js"
 }

@@ -4,12 +4,13 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const jsonParser = bodyParser.json();
 const router = express.Router();
-// const dao = require('./studentFSDao.js')(__dirname);
-const dao = require('./mongoDao.js');
+const nconf = require('nconf');
+
+nconf.env().argv().file('./conf/serverconf.json');
+
+const dao = require(nconf.get('dao'));
 
 module.exports = router;
-
-router.use(jsonParser);
 
 // REST END POINTS
 // Create
