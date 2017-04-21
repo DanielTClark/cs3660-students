@@ -4,7 +4,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const jsonParser = bodyParser.json();
 const router = express.Router();
-const dao = require('./studentFSDao.js')(__dirname);
+// const dao = require('./studentFSDao.js')(__dirname);
+const dao = require('./mongoDao.js');
 
 module.exports = router;
 
@@ -42,12 +43,12 @@ router.get('/students/:studentId.json', (req, res) => {
 // Update
 router.put('/students/:studentId.json', jsonParser, (req, res) => {
     let student = req.body;
-    student.id = undefined;
     let id = req.params.studentId;
 
     dao.update(id, student, (err) => {
         if (err) console.log(`Unable to update student. id: ${id}`.red);
-        req.sendStatus(204); // No Content
+        console.log(err);
+        res.sendStatus(204); // No Content
     });
 });
 
