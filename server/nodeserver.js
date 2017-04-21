@@ -28,24 +28,31 @@ const fs          = require('fs');
 const path        = require('path');
 const nconf       = require('nconf');
 const router      = require('./studentsRest.js');
+const winston     = require('winston');
+const expressWinston = require('express-winston-2');
+const winstonConf = require('./conf/winstonconf.js');
 
-nconf.argv().env().file({ file: 'serverconf.json' });
+nconf.argv().env().file({ file: './conf/serverconf.json' });
 
 nconf.defaults({
-    'webpath': '../web'
+    'webpath': path.resolve(__dirname, '../web'),
+    'srvpath': __dirname,
+    'port': 8080,
+    'ip': '0.0.0.0'
 });
 
-const WEBPATH = nconf.get('webpath');
-const SRVPATH = __dirname;
+const WEBPATH = path.resolve(nconf.get('webpath'));
+const SRVPATH = path.resolve(nconf.get('srvpath'));
 
-// INIT
+// Init
 const app = express();
 const server = http.createServer(app);
 
 console.log("Initializing server...");
 
-// MIDDLEWARE
+// Middleware
 app.use(morgan('dev'));
+app.use(expressWinston.logger(winstonConf));
 app.use(compression());
 
 app.use((req, res, next) => {
@@ -53,24 +60,24 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(favicon(path.join(WEBPATH, 'favicon.ico')));
+app.use(favicon(path.resolve(WEBPATH, 'favicon.ico')));
 app.use(express.static(WEBPATH));
 
+// Router
 app.use('/api/v1', router);
 
 // 404
 app.get('*', (req, res) => {
-    res.status(404).sendFile(path.join(WEBPATH, '404.html'));
+    res.status(404).sendFile(path.resolve(WEBPATH, '404.html'));
 });
 
-let port = process.env.PORT ? process.env.PORT : 80;
-
-// LISTEN
-server.listen(port, process.env.IP, () => {
+// Listen
+let port = nconf.get('port');
+server.listen(port, nconf.get('ip'), () => {
    console.log(`Server listening on PORT ${port}`);
 });
 
-// SIGNAL HANDLING
+// Signal handling
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
