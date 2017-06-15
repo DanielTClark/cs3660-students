@@ -5,6 +5,10 @@ This project is a toy app to demonstrate my ability to use Angular and Angular M
 along with Node to make a functioning web app.
 
 ## Features
+
+Project is configurable to work with MySQL and MongoDB databases.
+To change the configuration, edit serverconf.json.
+
 The data table view supports sorting, editing and deletion.
 
 The cards view, with the latest version, supports editing and deletion.
@@ -20,5 +24,6 @@ All operations on the students, including the initial load are done through a RE
 1. Download Node.js 6.3 or greater.
 2. Clone repository
 3. Navigate to local folder and run npm install.
-4. Run nodeserver.js. (Default port is 80, but can be changed with the PORT environment variable.)
-5. Navigate browser to localhost on the port you provided
+4. Edit server/conf/serverconf.json to use StudentFSDao.js
+5. Run nodeserver.js. (Default port is 80, but can be changed with the PORT environment variable.)
+6. Navigate browser to localhost on the port you provided
